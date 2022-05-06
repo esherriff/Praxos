@@ -175,7 +175,7 @@ As can be seen from the above code, intelligent use of indexed addressing modes 
 
 When switching the index register to another purpose, it is stored to the sp location in data memory and restored afterwards.
 
-### Conclusion
+## Conclusion
 
 A design for a small 32-bit CPU has been presented which fills the requirements for a means to rapidly move data around an Avalon bus. There are several areas that would benefit from further work:
 
