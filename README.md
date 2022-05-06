@@ -78,32 +78,32 @@ The table below summarises the instructions implemented.
 | BRIO K | If port_in(IO_FLAG_WIDTH-1 downto 0) = 0, adds the signed 28-bit constant K to the program counter. | - |
 | NOP | No operation, 4 clock cycles (implemented internally as branch never). | - |
 
-##Praxis Assembler
+## Praxis Assembler
 
 The assembler converts text files (.asm) containing assembly instructions and directives into a Memory Initialisation File (MIF), Mentor memory file (MEM) and a VHDL application image file.
 A program is assembled by running praxis.exe <filename> <PM_WIDTH>
 Where <filename> specifies the file to be assembled and PM_WIDTH specifies the width of the program memory address bus. Any assembly errors will be written to the console.
 The VHDL application image contains a vendor agnostic VHDL package that can initialise the program memory. It also doubles as a listing file by providing the assembly listing as VHDL comment next to the corresponding opcode.
 
-###Directives
+### Directives
 
 Directives are used to instruct the assembler how to assemble the program. All directives are prefixed with a period character (.).
 
 Currently the assembler only supports one directive, .EQU. Which is used to define a numerical value to an alphanumeric reference in the form .EQU X Y, where X is the label and Y is the value. .EQU is used to both label locations in data memory or constant values, depending upon the addressing mode of the instruction in which they appear as an operand.
 
-###Operators and functions
+### Operators and functions
 
 Currently the assembler supports only numerical constant values in decimal or hexadecimal format. Hexadecimal values must be prefixed with a $ character.
 
-###Labels
+### Labels
 
 Labels are used to refer to program locations symbolically. A label consists of a @ character followed by an alphanumeric string. A line containing a label must also contain a valid assembly instruction, an otherwise empty line cannot be labelled.
 
-###Comments
+### Comments
 
 Comments are initiated with a ; character and terminate at the next line break.
 
-###Jump and Link
+### Jump and Link
 
 The Praxos processor does not implement a traditional call stack using call and return operations. Instead it uses a single instruction JAL which can serve as both a call or return operation when used appropriately in combination with operations on the index register. It is recommended that a data memory location be allocated for use as a stack pointer so that the index register can be used for other purposes besides maintaining the stack.
 
@@ -175,7 +175,7 @@ As can be seen from the above code, intelligent use of indexed addressing modes 
 
 When switching the index register to another purpose, it is stored to the sp location in data memory and restored afterwards.
 
-###Conclusion
+### Conclusion
 
 A design for a small 32-bit CPU has been presented which fills the requirements for a means to rapidly move data around an Avalon bus. There are several areas that would benefit from further work:
 
