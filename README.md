@@ -5,9 +5,9 @@ The Praxos is a 32-bit soft core processor written in VHDL which has been design
 The Praxos instruction set provides direct access to a 32-bit Avalon memory mapped master interface, while also using faster internal program and data memory. To minimize logic usage the core is an accumulator-based architecture with a register-memory style instruction set.
 Features
 - 34 instructions with 3 address modes, branch instructions with most instructions requiring 3 clock cycles to execute (excluding branches, data memory reads and Avalon bus operations).
-- 232x36-bit program memory address space.
-- 228x32-bit data memory address space.
-- 216x32-bit IO address space (expandable to 232x32-bit).
+- 2<sup>32</sup>x36-bit program memory address space.
+- 2<sup>28</sup>x32-bit data memory address space.
+- 2<sup>16</sup>x32-bit IO address space (expandable to 2<sup>32</sup>x32-bit).
 - 32-bit accumulator and 32-bit index register.
 - Direct, indirect (with offset) and immediate addressing modes.
 - 32-bit Avalon memory mapped master.
@@ -112,63 +112,67 @@ The JAL instruction accepts an operand in the form of an offset to the index reg
 For example the following code implements the equivalent of call and return from a nested subroutines:
 
 ```
-.EQU sp 0				; allocate a stack pointer at DM(0)
-.EQU av_addr1 1			; allocate an Avalon address at DM(1)	
-.EQU av_addr2 2			; allocate an Avalon address at DM(1)	
-.EQU mask1 3			; some more variables
+.EQU sp 0               ; allocate a stack pointer at DM(0)
+.EQU av_addr1 1         ; allocate an Avalon address at DM(1)	
+.EQU av_addr2 2         ; allocate an Avalon address at DM(1)	
+.EQU mask1 3            ; some more variables
 .EQU	mask2 4
 .EQU io 5
-.EQU call_ret -1			; handy constant
-
-		ld#	$80000000	; load a constant
-		st	mask1		; store it
+.EQU call_ret -1        ; handy constant
+;
+		ld# 0
+		st av_addr1
+		ld# 4
+		st av_addr2
+		ld#	$80000000      ; load a constant
+		st	mask1          ; store it
 		ror
 		st	mask2
-		ld#	0		; load accumulator
-		st	sp		; initialise stack pointer
-@main	ild	sp		; load the index register with sp
-		ld#	10		; load subroutine parameter
-		push			; push the parameter
-		ld#	dec		; point the accumulator at @dec
-		jal	call_ret	; jump, link to sp-1
-		iadd#	1		; clear the parameter we pushed
-		ist	sp		; save the stack pointer
+		ld#	0              ; load accumulator
+		st	sp             ; initialise stack pointer
+@main	ild	sp             ; load the index register with sp
+		ld#	10             ; load subroutine parameter
+		push               ; push the parameter
+		ld#	dec            ; point the accumulator at @dec
+		jal	call_ret       ; jump, link to sp-1
+		iadd# 1            ; clear the parameter we pushed
+		ist	sp             ; save the stack pointer
 ; do some unrelated stuff with the index register
-		ild	av_addr1	; load first Avalon address
-		busrw	0		; read from it
-		iadd#	4		; increment address
-		ist	av_addr1	; store address
-		ldi	av_addr2	; load second Avalon address
-		busww	0		; write to it
-		iadd#	-4		; decrement address
-		ist	av_addr2	; store address
-		ild	sp		; load the stack pointer
+		ild	av_addr1       ; load first Avalon address
+		busrw	0          ; read from it
+		iadd#	4          ; increment address
+		ist	av_addr1       ; store address
+		ldi	av_addr2       ; load second Avalon address
+		busww	0          ; write to it
+		iadd#	-4         ; decrement address
+		ist	av_addr2       ; store address
+		ild	sp             ; load the stack pointer
 ; call from here as well
-		ld	mask2		; load a bit mask
-		push			; push bit mask
-		ld#	tog		; point at tog
-		jal	call_ret	; call
-		iadd#	1		; clear the parameter we pushed*
-		br	main		; jump
+		ld	mask2          ; load a bit mask
+		push               ; push bit mask
+		ld#	tog            ; point at tog
+		jal	call_ret       ; call
+		iadd# 1            ; clear the parameter we pushed
+		br	main           ; jump
 ; subroutine1
-@dec		ldi	0		; load the parameter
-@dec_lp	sub#	1		; decrement the parameter
-		brnz	dec_lp	; loop until zero
-		iadd#	call_ret	; push parent return address†
-		ld	mask1		; load parameter
-		push			; push parameter
-		ld#	tog		; point at @tog
-		jal	call_ret	; call
-		iadd#	1		; clear pushed parameter*
-		pop			; pop return address
-		jal	call_ret	; return
+@dec	ldi	0              ; load the parameter
+@dec_lp	sub#	1          ; decrement the parameter
+		brnz	dec_lp     ; loop until zero
+		iadd#	call_ret   ; push parent return address
+		ld	mask1          ; load parameter
+		push               ; push parameter
+		ld#	tog            ; point at @tog
+		jal	call_ret       ; call
+		iadd# 1            ; clear pushed parameter
+		pop                ; pop return address
+		jal	call_ret       ; return
 ; subroutine2
-@tog		ldi	0		; load parameter
-		xor	io		; xor mask with data
-		out	0		; write to IO port
-		st	io		; store data
-		ldi	call_ret  	; pop return address
-		jal	call_ret	; return
+@tog	ldi	0              ; load parameter
+		xor	io             ; xor mask with data
+		out	0              ; write to IO port
+		st	io             ; store data
+		ldi	call_ret       ; pop return address
+		jal	call_ret       ; return
 ```
 
 As can be seen from the above code, intelligent use of indexed addressing modes allows the management of both a call stack and stack frame. Functions may also push return values onto the stack before returning to the caller, return values can be saved to location -2 using sti and retrieved by the caller using ldi. Two important principles apply; first, that a subroutine that needs to perform a call allocate stack space for its caller’s return address (lines marked with †). Second, that any code that pushed parameters onto the stack before a call must clear them from the stack when the function returns (line marked with *). Both operations are conducted by simply updating the index register using the IADD# instruction.
