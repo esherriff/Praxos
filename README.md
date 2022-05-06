@@ -18,7 +18,7 @@ A typical Praxos core requires 450 logic elements and will run at over 80MHz in 
 
 The partial block diagram below shows the basic layout of the core.
 
-![alt_text](http://github.com/esherriff/Praxos/blob/main/docs/Block_diagram.png?raw=true)
+![alt text](http://github.com/esherriff/Praxos/blob/main/docs/Block_diagram.png?raw=true)
 
 The design makes use of the output registers within the program memory block RAM, which serve as an instruction register. The control signals from the FSM are registered to improve timing. The data RAM output registers are also used, which incurs an additional clock cycle delay to operations that read from data memory.
 
